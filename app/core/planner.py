@@ -1,7 +1,5 @@
 import json
 
-from sympy import content
-
 from app.llm.service import LLMService
 from app.models.research import ResearchPlan
 
