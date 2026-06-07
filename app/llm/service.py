@@ -6,7 +6,7 @@ class LLMService:
     def generate(
         self,
         prompt: str,
-        model: str = "minimaxai/minimax-m2.7"
+        model: str = "openai/gpt-oss-120b"
     ):
 
         response = client.chat.completions.create(

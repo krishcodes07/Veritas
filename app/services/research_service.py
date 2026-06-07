@@ -7,7 +7,6 @@ from app.models.search_result import SearchResult
 from app.config.research import MAX_DOCUMENTS_TO_READ
 
 
-
 class ResearchService:
 
     def __init__(self):
@@ -44,7 +43,7 @@ class ResearchService:
                 )
             )
 
-        # Step 3: Remove Duplicate URLs
+        # Step 3: Deduplicate Sources
         seen = set()
         unique_sources = []
 
@@ -54,8 +53,12 @@ class ResearchService:
                 seen.add(source.url)
                 unique_sources.append(source)
 
-        # Step 4: Read Top Sources
+        # Step 4: Read Documents
         documents = []
+
+        blocked_documents = 0
+        too_short_documents = 0
+        error_documents = 0
 
         print(
             f"\nReading top {min(len(unique_sources), MAX_DOCUMENTS_TO_READ)} sources..."
@@ -67,17 +70,51 @@ class ResearchService:
 
             document = self.reader.read(source)
 
-            documents.append(document)
+            if document.status == "success":
+
+                documents.append(document)
+
+            elif document.status == "blocked":
+
+                blocked_documents += 1
+
+                print(f"Blocked page: {source.url}")
+
+            elif document.status == "too_short":
+
+                too_short_documents += 1
+
+                print(f"Too short: {source.url}")
+
+            else:
+
+                error_documents += 1
+
+                print(
+                    f"Reader error ({document.status}): {source.url}"
+                )
 
         # Step 5: Metrics
         metrics = {
             "total_queries": len(plan.search_queries),
             "total_results": total_results,
             "unique_results": len(unique_sources),
-            "documents_read": len(documents)
+
+            "documents_attempted": min(
+                len(unique_sources),
+                MAX_DOCUMENTS_TO_READ
+            ),
+
+            "successful_documents": len(documents),
+
+            "blocked_documents": blocked_documents,
+
+            "too_short_documents": too_short_documents,
+
+            "error_documents": error_documents
         }
 
-        # Step 6: Return Response
+        # Step 6: Response
         return {
             "status": "success",
 
