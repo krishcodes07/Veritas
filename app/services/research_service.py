@@ -1,6 +1,7 @@
 from app.core.planner import Planner
 from app.core.search import SearchEngine
 from app.core.reader import Reader
+from app.core.extractor import Extractor
 
 from app.models.search_result import SearchResult
 
@@ -13,6 +14,7 @@ class ResearchService:
         self.planner = Planner()
         self.search_engine = SearchEngine()
         self.reader = Reader()
+        self.extractor = Extractor()
 
     def run(self, query: str):
 
@@ -43,7 +45,7 @@ class ResearchService:
                 )
             )
 
-        # Step 3: Deduplicate Sources
+        # Step 3: Remove Duplicate URLs
         seen = set()
         unique_sources = []
 
@@ -53,7 +55,7 @@ class ResearchService:
                 seen.add(source.url)
                 unique_sources.append(source)
 
-        # Step 4: Read Documents
+        # Step 4: Read Top Sources
         documents = []
 
         blocked_documents = 0
@@ -70,31 +72,41 @@ class ResearchService:
 
             document = self.reader.read(source)
 
-            if document.status == "success":
-
-                documents.append(document)
-
-            elif document.status == "blocked":
-
+            if document.status == "blocked":
                 blocked_documents += 1
+                continue
 
-                print(f"Blocked page: {source.url}")
-
-            elif document.status == "too_short":
-
+            if document.status == "too_short":
                 too_short_documents += 1
+                continue
 
-                print(f"Too short: {source.url}")
-
-            else:
-
+            if document.status.startswith("error"):
                 error_documents += 1
+                continue
 
-                print(
-                    f"Reader error ({document.status}): {source.url}"
-                )
+            documents.append(document)
 
-        # Step 5: Metrics
+        # Step 5: Extract Claims
+        claims = []
+
+        print(
+            f"\nExtracting claims from {len(documents)} documents..."
+        )
+
+        for document in documents:
+
+            extracted_claims = self.extractor.extract_claims(
+                document
+            )
+
+            print(
+                f"Extracted {len(extracted_claims)} claims from: "
+                f"{document.title}"
+            )
+
+            claims.extend(extracted_claims)
+
+        # Step 6: Metrics
         metrics = {
             "total_queries": len(plan.search_queries),
             "total_results": total_results,
@@ -106,15 +118,14 @@ class ResearchService:
             ),
 
             "successful_documents": len(documents),
-
             "blocked_documents": blocked_documents,
-
             "too_short_documents": too_short_documents,
+            "error_documents": error_documents,
 
-            "error_documents": error_documents
+            "claims_extracted": len(claims)
         }
 
-        # Step 6: Response
+        # Step 7: Response
         return {
             "status": "success",
 
@@ -135,5 +146,10 @@ class ResearchService:
             "documents": [
                 document.model_dump()
                 for document in documents
+            ],
+
+            "claims": [
+                claim.model_dump()
+                for claim in claims
             ]
         }

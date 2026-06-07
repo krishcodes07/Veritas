@@ -5,7 +5,7 @@ import requests
 def test_research():
     url = "http://127.0.0.1:8000/research"
     payload = {
-        "query": "Bitcoin vs Gold"
+        "query": "Bitcoin vs Gold? Which is a better store of value?"
     }
     response = requests.post(url, json=payload)
     print(response.json())
