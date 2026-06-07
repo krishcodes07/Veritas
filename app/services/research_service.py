@@ -7,9 +7,10 @@ class ResearchService:
         self.planner = Planner()
 
     def run(self, query: str):
+
         plan = self.planner.generate_plan(query)
 
         return {
             "status": "success",
-            "plan": plan
+            "plan": plan.model_dump()
         }
