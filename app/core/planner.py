@@ -2,9 +2,10 @@ import json
 
 from sympy import content
 
-from app.llm.nvidia import client
+from app.llm.service import LLMService
 from app.models.research import ResearchPlan
 
+llm = LLMService()
 
 class Planner:
 
@@ -36,19 +37,7 @@ Example only in this format:
 Here's the Research Question:
 {query}
 """
-
-        response = client.chat.completions.create(
-            model="minimaxai/minimax-m2.7",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            temperature=0.2
-        )
-
-        content = response.choices[0].message.content
+        content = llm.generate(prompt)
         print("Planner Response:", content)
         data = json.loads(content)
 
