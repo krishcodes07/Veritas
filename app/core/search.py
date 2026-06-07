@@ -1,6 +1,7 @@
 import requests
 
 from app.config.settings import SERPER_API_KEY
+from app.config.research import MAX_RESULTS_PER_QUERY
 from app.models.source import Source
 
 
@@ -8,7 +9,7 @@ class SearchEngine:
 
     URL = "https://google.serper.dev/search"
 
-    def search(self, query: str, limit: int = 5):
+    def search(self, query: str, limit: int = MAX_RESULTS_PER_QUERY):
 
         payload = {
             "q": query
