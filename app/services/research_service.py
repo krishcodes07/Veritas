@@ -55,18 +55,31 @@ class ResearchService:
                 seen.add(source.url)
                 unique_sources.append(source)
 
-        # Step 4: Read Top Sources
+        # Optional: prioritize richer search results
+        unique_sources.sort(
+            key=lambda s: len(s.snippet),
+            reverse=True
+        )
+
+        # Step 4: Collect Successful Documents
         documents = []
 
         blocked_documents = 0
         too_short_documents = 0
         error_documents = 0
 
+        sources_attempted = 0
+
         print(
-            f"\nReading top {min(len(unique_sources), MAX_DOCUMENTS_TO_READ)} sources..."
+            f"\nCollecting {MAX_DOCUMENTS_TO_READ} successful documents..."
         )
 
-        for source in unique_sources[:MAX_DOCUMENTS_TO_READ]:
+        for source in unique_sources:
+
+            if len(documents) >= MAX_DOCUMENTS_TO_READ:
+                break
+
+            sources_attempted += 1
 
             print(f"Reading: {source.url}")
 
@@ -85,6 +98,10 @@ class ResearchService:
                 continue
 
             documents.append(document)
+
+            print(
+                f"✓ Success ({len(documents)}/{MAX_DOCUMENTS_TO_READ})"
+            )
 
         # Step 5: Extract Claims
         claims = []
@@ -109,15 +126,14 @@ class ResearchService:
         # Step 6: Metrics
         metrics = {
             "total_queries": len(plan.search_queries),
+
             "total_results": total_results,
             "unique_results": len(unique_sources),
 
-            "documents_attempted": min(
-                len(unique_sources),
-                MAX_DOCUMENTS_TO_READ
-            ),
+            "sources_attempted": sources_attempted,
 
             "successful_documents": len(documents),
+
             "blocked_documents": blocked_documents,
             "too_short_documents": too_short_documents,
             "error_documents": error_documents,

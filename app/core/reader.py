@@ -5,6 +5,7 @@ from app.models.source import Source
 
 from app.utils.html_cleaner import clean_html
 from app.utils.page_detector import is_blocked_page
+from app.utils.pdf_reader import extract_pdf_text
 
 from app.config.research import (
     MAX_DOCUMENT_CHARS,
@@ -28,7 +29,23 @@ class Reader:
                 }
             )
 
-            text = clean_html(response.text)
+            content_type = response.headers.get(
+                "content-type",
+                ""
+            ).lower()
+
+            # PDF Support
+            if "application/pdf" in content_type:
+
+                text = extract_pdf_text(
+                    response.content
+                )
+
+            else:
+
+                text = clean_html(
+                    response.text
+                )
 
             if is_blocked_page(text):
 

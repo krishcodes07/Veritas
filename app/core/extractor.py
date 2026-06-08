@@ -34,7 +34,7 @@ Format:
 
 Document:
 
-{document.content[:3000]}
+{document.content[:2000]}
 """
 
         try:
